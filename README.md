@@ -8,23 +8,21 @@ Any portable bundle may be published.
 
 
 Install
--------
+=======
 
-### MAC:
+### OSX:
 
-One-time:
+#### One-time:
 
-  * Install docker: http://docs.docker.com/installation/mac/
-	````
-	boot2docker init
-	# https://github.com/boot2docker/boot2docker/blob/master/doc/WORKAROUNDS.md
-	VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port49000,tcp,,49000,,49000";
-	boot2docker start
-	````
+Install docker: http://docs.docker.com/installation/mac/
+
+    boot2docker init
+    # https://github.com/boot2docker/boot2docker/blob/master/doc/WORKAROUNDS.md
+    VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port49000,tcp,,49000,,49000";
 
 Activate:
 
-    bin/activate.sh
+    bin/activate.sh    # runs boot2docker start
 
 Examples:
 
