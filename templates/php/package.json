@@ -1,0 +1,12 @@
+{
+	"directories": {
+		"deploy": "www"
+	},
+	"config": {
+		"github.com/pinf-to/pinf-to-docker/0": {
+			"docker": {
+				"port": 80
+			}
+		}
+	}
+}

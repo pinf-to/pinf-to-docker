@@ -1,0 +1,3 @@
+[submodule "templates/php/image"]
+	path = templates/php/image
+url=git@github.com:pinf-to/docker-nginx-php.git

@@ -1,0 +1,6 @@
+{
+	"scripts": {
+		"publish": "../../bin/pinf-publish",
+		"run": "../../bin/pinf-run"
+	}
+}
