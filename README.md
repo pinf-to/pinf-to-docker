@@ -30,3 +30,15 @@ Examples:
     npm run-script publish --ignore-dirty
     npm run-script run
     open http://localhost:49000/
+
+
+NOTES
+=====
+
+  * Docker
+    * http://docs.docker.com/userguide/
+    * https://docs.docker.com/reference/builder/
+
+  * `templates/php`
+    * https://github.com/phusion/baseimage-docker
+    * https://github.com/pinf-to/docker-nginx-php
