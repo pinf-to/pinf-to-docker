@@ -1,3 +1,6 @@
 [submodule "templates/php/image"]
 	path = templates/php/image
 url=git@github.com:pinf-to/docker-nginx-php.git
+[submodule "templates/phpfpm-apache/image"]
+	path = templates/phpfpm-apache/image
+	url = git@github.com:pinf-to/tutum-docker-php.git
