@@ -1,0 +1,18 @@
+{
+	"directories": {
+		"deploy": "sample"
+	},
+	"config": {
+		"github.com/pinf-to/pinf-to-docker/0": {
+			"docker": {
+				"port": 80,
+				"run": {
+					"args": []
+				},
+				"start": {
+					"args": []
+				}
+			}
+		}
+	}
+}

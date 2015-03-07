@@ -18,7 +18,10 @@ Install docker: http://docs.docker.com/installation/mac/
 
     boot2docker init
     # https://github.com/boot2docker/boot2docker/blob/master/doc/WORKAROUNDS.md
-    VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port49000,tcp,,49000,,49000";
+    for i in {49000..49900}; do
+     VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port$i,tcp,,$i,,$i";
+     VBoxManage modifyvm "boot2docker-vm" --natpf1 "udp-port$i,udp,,$i,,$i";
+    done
 
 Activate:
 

@@ -1,12 +1,16 @@
 {
-	"name": "pinf-to-docker",
-	"version": "0.1.0",
+	  "name": "pinf-to-docker",
+	  "version": "0.1.0",
+    "bin": {
+        "pinf-publish": "./bin/pinf-publish",
+        "pinf-run": "./bin/pinf-run"
+    },
     "dependencies": {
         "to.pinf.lib": "0.1.x"
     },
-  "config": {
-    "pio.deploy.converter": {
-      "name": "nodejs-lib"
+    "config": {
+        "pio.deploy.converter": {
+            "name": "nodejs-lib"
+        }
     }
-  }
 }

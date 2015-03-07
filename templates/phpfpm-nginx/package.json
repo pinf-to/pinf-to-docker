@@ -1,0 +1,25 @@
+{
+	"directories": {
+		"deploy": "www"
+	},
+	"config": {
+		"github.com/pinf-to/pinf-to-docker/0": {
+			"docker": {
+				"port": 80,
+				"run": {
+					"args": [
+						"/sbin/my_init",
+						"--enable-insecure-key"
+					]
+				},
+				"start": {
+					"args": [
+						"-d",
+						"/sbin/my_init",
+						"--enable-insecure-key"
+					]
+				}
+			}
+		}
+	}
+}

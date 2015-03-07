@@ -35,14 +35,17 @@ return API.getPrograms(function (err, programs) {
 
 					API.ASSERT.equal(typeof templateConfig.docker, "object", "'directories.deploy' must be set in '" + templateDescriptorPath + "'");
 					API.ASSERT.equal(typeof templateConfig.docker.port, "number", "config['github.com/pinf-to/pinf-to-docker/0'].docker.port' must be set in '" + templateDescriptorPath + "'");
+					API.ASSERT.equal(typeof templateConfig.docker.run, "object", "config['github.com/pinf-to/pinf-to-docker/0'].docker.run' must be set in '" + templateDescriptorPath + "'");
+					API.ASSERT.equal(Array.isArray(templateConfig.docker.run.args), true, "config['github.com/pinf-to/pinf-to-docker/0'].docker.run.args' must be set in '" + templateDescriptorPath + "'");
 
 					function runImage (callback) {
 
-						console.log("Running image ...");
+						console.log("Starting image ...");
+
+						API.ASSERT.equal(typeof process.env.PORT, "string", "process.env.PORT' must be set");
 
 						return API.runCommands([
-							// TODO: Customizable port (49000)
-							'docker run -p 49000:' + templateConfig.docker.port + ' ' + config.docker.username + '/' + programName + ':' + config.docker.tag + ' /sbin/my_init --enable-insecure-key'
+							'docker run -p ' + process.env.PORT + ':' + templateConfig.docker.port + ' ' + config.docker.username + '/' + programName + ':' + config.docker.tag + ' ' + templateConfig.docker.run.args.join(' ')
 						], {
 							cwd: pubPath
 						}, function (err, response) {

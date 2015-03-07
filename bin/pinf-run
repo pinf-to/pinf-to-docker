@@ -9,4 +9,6 @@ while [ -h "$SOURCE" ]; do
 done
 BASE_PATH="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+$(boot2docker shellinit)
+
 node $BASE_PATH/pinf-run.js $@

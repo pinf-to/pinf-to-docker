@@ -44,43 +44,75 @@ require("to.pinf.lib/lib/publish").for(module, function (API, callback) {
 
 							function copy (fromPath, toPath, callback) {
 
-								console.log("Copying and transforming fileset", fromPath, "to", toPath);
+								console.log("Copying and transforming fileset", fromPath, "to", toPath, "...");
 
-								var destinationStream = API.GULP.dest(toPath);
-
-								destinationStream.once("end", function () {
-									return callback();
+								var domain = require('domain').create();
+								domain.on('error', function(err) {
+									// The error won't crash the process, but what it does is worse!
+									// Though we've prevented abrupt process restarting, we are leaking
+									// resources like crazy if this ever happens.
+									// This is no better than process.on('uncaughtException')!
+									console.error("UNHANDLED DOMAIN ERROR:", err.stack, new Error().stack);
+									process.exit(1);
 								});
+								domain.run(function() {
 
-								var filter = API.GULP_FILTER(['index.php']);
+									try {
 
-								// TODO: Respect gitignore by making pinf walker into gulp plugin. Use pinf-package-insight to load ignore rules.
-								var stream = API.GULP.src([
-									"**",
-									"!.pub/",
-									"!npm-debug.log"
-								], {
-									cwd: fromPath
-								})
-			
-									.pipe(filter)
-									// TODO: Add generic variables here and move to `to.pinf.lib`.
-									.pipe(API.GULP_REPLACE(/\{\{message\}\}/g, 'Hello World'))
-									.pipe(filter.restore())
-			
-									.pipe(API.GULP_RENAME(function (path) {
-										const re = /(^|\/)(_NAME_)(\/|$)/;
-										if (path.basename === "_NAME_") {
-											path.basename = programName;
-										} else
-										if (re.test(path.dirname)) {
-											path.dirname = path.dirname.replace(re, "$1" + programName + "$3");
-										}
-									}))
-									.pipe(destinationStream);
+										var destinationStream = API.GULP.dest(toPath);
 
-								return stream.once("error", function (err) {
-									return callback(err);
+										destinationStream.once("error", function (err) {
+											return callback(err);
+										});
+
+										destinationStream.once("end", function () {
+
+											console.log("... done");
+
+											return callback();
+										});
+
+										var filter = API.GULP_FILTER(['index.php']);
+
+										// TODO: Respect gitignore by making pinf walker into gulp plugin. Use pinf-package-insight to load ignore rules.
+										var stream = API.GULP.src([
+											"**",
+											"!.pub/",
+											"!.pub/**",
+											"!npm-debug.log",
+											"!node_modules/",
+											"!node_modules/**"
+										], {
+											cwd: fromPath
+										})
+											.pipe(API.GULP_PLUMBER())
+											.pipe(API.GULP_DEBUG({
+												title: '[pinf-to-docker]',
+												minimal: true
+											}))
+											.pipe(filter)
+											// TODO: Add generic variables here and move to `to.pinf.lib`.
+											.pipe(API.GULP_REPLACE(/\{\{message\}\}/g, 'Hello World'))
+											.pipe(filter.restore())
+											.pipe(API.GULP_RENAME(function (path) {
+												const re = /(^|\/)(_NAME_)(\/|$)/;
+												if (path.basename === "_NAME_") {
+													path.basename = programName;
+												} else
+												if (re.test(path.dirname)) {
+													path.dirname = path.dirname.replace(re, "$1" + programName + "$3");
+												}
+											}))
+											.pipe(destinationStream);
+
+										return stream.once("error", function (err) {
+											err.message += " (while running gulp)";
+											err.stack += "\n(while running gulp)";
+											return callback(err);
+										});
+									} catch (err) {
+										return callback(err);
+									}
 								});
 							}
 

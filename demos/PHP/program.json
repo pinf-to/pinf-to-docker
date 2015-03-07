@@ -5,7 +5,7 @@
 	},
 	"config": {
 		"github.com/pinf-to/pinf-to-docker/0": {
-			"template": "php",
+			"template": "phpfpm-nginx",
 			"docker": {
 				"username": "cadorn",
 				"tag": "dev"
