@@ -11,13 +11,6 @@
 						"/sbin/my_init",
 						"--enable-insecure-key"
 					]
-				},
-				"start": {
-					"args": [
-						"-d",
-						"/sbin/my_init",
-						"--enable-insecure-key"
-					]
 				}
 			}
 		}
