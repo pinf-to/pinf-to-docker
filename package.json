@@ -1,10 +1,11 @@
 {
-	  "name": "pinf-to-docker",
-	  "version": "0.1.0",
+    "name": "pinf-to-docker",
+    "version": "0.1.0",
     "bin": {
         "pinf-publish": "./bin/pinf-publish",
         "pinf-run": "./bin/pinf-run"
     },
+    "main": "plugin.js",
     "dependencies": {
         "to.pinf.lib": "0.1.x"
     },

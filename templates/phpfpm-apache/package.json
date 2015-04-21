@@ -1,6 +1,7 @@
 {
 	"directories": {
-		"deploy": "sample"
+		"deploy": "sample",
+		"mount": "/var/www/html"
 	},
 	"config": {
 		"github.com/pinf-to/pinf-to-docker/0": {
