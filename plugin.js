@@ -63,154 +63,167 @@ exports.for = function (API) {
 
 	exports.turn = function (resolvedConfig) {
 
-		return API.Q.denodeify(function (callback) {
+		return API.ASYNC([
+			"GULP",
+			"GULP_DEBUG",
+			"GULP_PLUMBER",
+			"GULP_RENAME",
+			"GULP_REPLACE",
+			"GULP_FILTER"
+		], function (GULP, GULP_DEBUG, GULP_PLUMBER, GULP_RENAME, GULP_REPLACE, GULP_FILTER) {
 
-			var programDescriptorPath = API.getRootPath();
-			var programDescriptor = API.programDescriptor;
+			return API.Q.denodeify(function (callback) {
 
-			var programName = resolvedConfig.name;
+				var programDescriptorPath = API.getRootPath();
+				var programDescriptor = API.programDescriptor;
 
-			var fromPath = resolvedConfig.sourcePath;
-			var pubPath = API.getTargetPath();
+				var programName = resolvedConfig.name;
 
-			var templatePath = API.PATH.join(__dirname, "templates", resolvedConfig.template);
-			var templateDescriptorPath = API.PATH.join(templatePath, "package.json");
-			var templateDescriptor = API.FS.readJsonSync(templateDescriptorPath);
+				var fromPath = resolvedConfig.sourcePath;
+				var pubPath = API.getTargetPath();
 
-			API.ASSERT.equal(typeof templateDescriptor.directories.deploy, "string", "'directories.deploy' must be set in '" + templateDescriptorPath + "'");
+				var templatePath = API.PATH.join(__dirname, "templates", resolvedConfig.template);
+				var templateDescriptorPath = API.PATH.join(templatePath, "package.json");
+				var templateDescriptor = API.FS.readJsonSync(templateDescriptorPath);
 
-			function copyFiles (fromPath, toPath, callback) {
+				API.ASSERT.equal(typeof templateDescriptor.directories.deploy, "string", "'directories.deploy' must be set in '" + templateDescriptorPath + "'");
 
-				console.log("Copying and transforming program from", fromPath, "to", toPath);
+				function copyFiles (fromPath, toPath, callback) {
 
-				// TODO: Use generic copy and transform function that respects ignore rules.
+					console.log("Copying and transforming program from", fromPath, "to", toPath);
 
-				return API.FS.remove(toPath, function (err) {
-					if (err) return callback(err);
+					// TODO: Use generic copy and transform function that respects ignore rules.
 
-					function copy (fromPath, toPath, callback) {
-
-						console.log("Copying and transforming fileset", fromPath, "to", toPath, "...");
-
-						var domain = require('domain').create();
-						domain.on('error', function(err) {
-							// The error won't crash the process, but what it does is worse!
-							// Though we've prevented abrupt process restarting, we are leaking
-							// resources like crazy if this ever happens.
-							// This is no better than process.on('uncaughtException')!
-							console.error("UNHANDLED DOMAIN ERROR:", err.stack, new Error().stack);
-							process.exit(1);
-						});
-						domain.run(function() {
-
-							try {
-
-								var destinationStream = API.GULP.dest(toPath);
-
-								destinationStream.once("error", function (err) {
-									return callback(err);
-								});
-
-								destinationStream.once("end", function () {
-
-									console.log("... done");
-
-									return callback();
-								});
-
-								var filter = API.GULP_FILTER(['index.php']);
-
-								// TODO: Respect gitignore by making pinf walker into gulp plugin. Use pinf-package-insight to load ignore rules.
-								var stream = API.GULP.src([
-									"**",
-									"!.pub/",
-									"!.pub/**",
-									"!npm-debug.log",
-// If node modules should NOT be copied that must be declared in `.distignore` or `.gitignore` if `.distignore` does not exist.
-//									"!node_modules/",
-//									"!node_modules/**"
-								], {
-									cwd: fromPath
-								})
-									.pipe(API.GULP_PLUMBER())
-									.pipe(API.GULP_DEBUG({
-										title: '[pinf-to-docker]',
-										minimal: true
-									}))
-									.pipe(filter)
-									// TODO: Add generic variables here and move to `to.pinf.lib`.
-									.pipe(API.GULP_REPLACE(/\{\{message\}\}/g, 'Hello World'))
-									.pipe(filter.restore())
-									.pipe(API.GULP_RENAME(function (path) {
-										const re = /(^|\/)(_NAME_)(\/|$)/;
-										if (path.basename === "_NAME_") {
-											path.basename = programName;
-										} else
-										if (re.test(path.dirname)) {
-											path.dirname = path.dirname.replace(re, "$1" + programName + "$3");
-										}
-									}))
-									.pipe(destinationStream);
-
-								return stream.once("error", function (err) {
-									err.message += " (while running gulp)";
-									err.stack += "\n(while running gulp)";
-									return callback(err);
-								});
-							} catch (err) {
-								return callback(err);
-							}
-						});
-					}
-
-					return copy(API.PATH.join(templatePath, "image"), toPath, function (err) {
+					return API.FS.remove(toPath, function (err) {
 						if (err) return callback(err);
 
-						return copy(fromPath, API.PATH.join(toPath, templateDescriptor.directories.deploy), callback);
-					});
-				});
-			}
+						function copy (fromPath, toPath, callback) {
 
-			function buildImage (callback) {
+							console.log("Copying and transforming fileset", fromPath, "to", toPath, "...");
 
-				console.log("Building image ...");
+							var domain = require('domain').create();
+							domain.on('error', function(err) {
+								// The error won't crash the process, but what it does is worse!
+								// Though we've prevented abrupt process restarting, we are leaking
+								// resources like crazy if this ever happens.
+								// This is no better than process.on('uncaughtException')!
+								console.error("UNHANDLED DOMAIN ERROR:", err.stack, new Error().stack);
+								process.exit(1);
+							});
+							domain.run(function() {
 
-				var env = {};
-				for (var name in process.env) {
-					env[name] = process.env[name];
-				}
-				dockerVarNames.forEach(function (name) {
-					env[name] = resolvedConfig.docker[name];
-				});
-				return API.runCommands([
-					'docker build -t ' + resolvedConfig.docker.username + '/' + programName + ':' + resolvedConfig.docker.tag + ' .'
-//					'docker build --no-cache -t ' + resolvedConfig.docker.username + '/' + programName + ':' + resolvedConfig.docker.tag + ' .'
-				], {
-					cwd: pubPath,
-					env: env
-				}, function (err, response) {
-					if (err) {
-						if (/\/var\/run\/docker\.sock: no such file or directory/.test(err.stderr)) {
-							if (
-								process.platform === "darwin" &&
-								!process.env.DOCKER_HOST
-							) {
-								console.error("\n\n  NOTE: Have you started boot2docker?:\n\n    boot2docker start\n\n");
-							}
+								try {
+
+									var destinationStream = GULP.dest(toPath);
+
+									destinationStream.once("error", function (err) {
+										return callback(err);
+									});
+
+									destinationStream.once("end", function () {
+
+										console.log("... done");
+
+										return callback();
+									});
+
+									var filter = GULP_FILTER(['index.php']);
+
+									// TODO: Respect gitignore by making pinf walker into gulp plugin. Use pinf-package-insight to load ignore rules.
+									var stream = GULP.src([
+										"**",
+										"!.pub/",
+										"!.pub/**",
+										"!npm-debug.log",
+	// If node modules should NOT be copied that must be declared in `.distignore` or `.gitignore` if `.distignore` does not exist.
+	//									"!node_modules/",
+	//									"!node_modules/**"
+									], {
+										cwd: fromPath
+									})
+										.pipe(GULP_PLUMBER())
+										.pipe(GULP_DEBUG({
+											title: '[pinf-to-docker]',
+											minimal: true
+										}))
+										.pipe(filter)
+										// TODO: Add generic variables here and move to `to.pinf.lib`.
+										.pipe(GULP_REPLACE(/\{\{message\}\}/g, 'Hello World'))
+										.pipe(filter.restore())
+										.pipe(GULP_RENAME(function (path) {
+											const re = /(^|\/)(_NAME_)(\/|$)/;
+											if (path.basename === "_NAME_") {
+												path.basename = programName;
+											} else
+											if (re.test(path.dirname)) {
+												path.dirname = path.dirname.replace(re, "$1" + programName + "$3");
+											}
+										}))
+										.pipe(destinationStream);
+
+									return stream.once("error", function (err) {
+										err.message += " (while running gulp)";
+										err.stack += "\n(while running gulp)";
+										return callback(err);
+									});
+								} catch (err) {
+									return callback(err);
+								}
+							});
 						}
-						return callback(err);
+
+						return copy(API.PATH.join(templatePath, "image"), toPath, function (err) {
+							if (err) return callback(err);
+
+							return copy(fromPath, API.PATH.join(toPath, templateDescriptor.directories.deploy), callback);
+						});
+					});
+				}
+
+				function buildImage (callback) {
+
+					console.log("Building image ...");
+
+					var env = {};
+					for (var name in process.env) {
+						env[name] = process.env[name];
 					}
+					dockerVarNames.forEach(function (name) {
+						env[name] = resolvedConfig.docker[name];
+					});
+					return API.runCommands([
+						'docker build -t ' + resolvedConfig.docker.username + '/' + programName + ':' + resolvedConfig.docker.tag + ' .'
+	//					'docker build --no-cache -t ' + resolvedConfig.docker.username + '/' + programName + ':' + resolvedConfig.docker.tag + ' .'
+					], {
+						cwd: pubPath,
+						env: env
+					}, function (err, response) {
+						if (err) {
+							if (
+								/\/var\/run\/docker\.sock: no such file or directory/.test(err.stderr) ||
+								/\not running/.test(err.stderr)
+							) {
+								if (
+									process.platform === "darwin" &&
+									!process.env.DOCKER_HOST
+								) {
+									console.error("\n\n  NOTE: Have you started boot2docker?:\n\n    boot2docker up\n\n");
+								}
+							}
+							return callback(err);
+						}
 
-					return callback(null);
+						return callback(null);
+					});
+				}
+
+				return copyFiles(fromPath, pubPath, function (err) {
+					if (err) return callback(err);
+
+					return buildImage(callback);
 				});
-			}
-
-			return copyFiles(fromPath, pubPath, function (err) {
-				if (err) return callback(err);
-
-				return buildImage(callback);
-			});
-		})();
+			})();
+		});
 	}
 
 	exports.spin = function (resolvedConfig) {
