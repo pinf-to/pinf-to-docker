@@ -1,6 +1,6 @@
 {
 	"directories": {
-		"deploy": "sample",
+		"deploy": "www",
 		"mount": "/var/www/html"
 	},
 	"config": {
